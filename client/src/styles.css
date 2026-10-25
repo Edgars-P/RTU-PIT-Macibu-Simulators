@@ -1,0 +1,22 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f5f6f8; color: #222; }
+main { max-width: 1000px; margin: 0 auto; padding: 16px; }
+h2, h3 { margin-top: 0; }
+
+input, select, textarea, button { font: inherit; padding: 6px 10px; }
+input, select, textarea { width: 100%; border: 1px solid #ccc; border-radius: 6px; }
+button { border: 1px solid #999; border-radius: 6px; background: #fff; cursor: pointer; }
+label { display: block; margin-bottom: 10px; }
+
+.topbar { display: flex; gap: 16px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #ddd; }
+.spacer { margin-left: auto; }
+.card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.narrow { max-width: 360px; margin: 60px auto; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.error { color: #b00020; }
+.muted { color: #777; }
+.ad { border: 1px dashed #aaa; padding: 24px; text-align: center; color: #777; }
+.score { font-size: 2rem; font-weight: bold; text-align: center; }
+table { width: 100%; border-collapse: collapse; }
+td, th { border-bottom: 1px solid #eee; padding: 6px; text-align: left; }
