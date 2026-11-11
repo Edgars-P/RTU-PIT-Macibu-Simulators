@@ -9,36 +9,21 @@ export function setUser(user: User | null) {
   localStorage.setItem('user', JSON.stringify(user));
 }
 
-/** fetch apvalks: JSON iekšā/ārā, kļūdas ziņa no servera `{ error }`. */
+/**
+ * fetch apvalks: JSON iekšā/ārā, kļūdas ziņa no servera `{ error }`.
+ * `FormData` ķermenis tiek sūtīts kā multipart (Content-Type uzliek pārlūks).
+ */
 export async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const isForm = body instanceof FormData;
   const res = await fetch(`/api${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', 'x-user-id': String(getUser()?.id ?? '') },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: {
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
+      'x-user-id': String(getUser()?.id ?? ''),
+    },
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? res.statusText);
-  return data;
-}
-
-//nosūta failu serverim
-export async function uploadFile(file: File) {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const res = await fetch('/api/uploads', {
-    method: 'POST',
-    headers: {
-      'x-user-id': String(getUser()?.id ?? ''),
-    },
-    body: formData,
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error ?? 'Augšupielāde neizdevās');
-  }
-
   return data;
 }

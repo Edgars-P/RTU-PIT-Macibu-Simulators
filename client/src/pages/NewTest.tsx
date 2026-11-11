@@ -1,34 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Lesson, Upload } from '../../../shared/types';
-import { api, getUser, uploadFile } from '../api';
+import { api, getUser } from '../api';
 
 /** 3. ekrāns — Jauns tests: materiāla augšupielāde vai tēmas ievade. */
 export function NewTest() {
   const navigate = useNavigate();
   const [topic, setTopic] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [error, setError] = useState('');
-  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     api<Upload[]>('GET', '/uploads').then(setUploads).catch((e) => setError(e.message));
   }, []);
 
   async function generate() {
+    setError('');
     try {
-       setError('');
-
-      // If a file was selected, upload it first
+      // Ja izvēlēts fails, vispirms to augšupielādē
+      let uploadIds: number[] | undefined;
       if (file) {
-        await uploadFile(file);
-
-        // Refresh the uploaded files list
-        const updatedUploads = await api<Upload[]>('GET', '/uploads');
-        setUploads(updatedUploads);
+        const form = new FormData();
+        form.append('file', file);
+        const uploaded = await api<Upload>('POST', '/uploads', form);
+        setUploads((list) => [...list, uploaded]);
+        uploadIds = [uploaded.id];
       }
-
-      const lesson = await api<Lesson>('POST', '/lessons', { topic });
+      const lesson = await api<Lesson>('POST', '/lessons', { topic, uploadIds });
       navigate(`/test/${lesson.id}`);
     } catch (e) {
       setError((e as Error).message);
@@ -39,16 +38,9 @@ export function NewTest() {
     <div className="cols">
       <div className="card">
         <h3>Jauns tests</h3>
-
-        <label>
-          Augšupielādēt mācību materiālus (maks. 15 MB)
-          <input
-            type="file"
-            accept=".txt"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
+        <label>Augšupielādēt mācību materiālus (maks. 15 MB)
+          <input type="file" accept=".txt" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         </label>
-
         <p className="muted">vai</p>
         <label>Apgūstamā tēma<input value={topic} onChange={(e) => setTopic(e.target.value)} /></label>
         <p className="error">{error}</p>
