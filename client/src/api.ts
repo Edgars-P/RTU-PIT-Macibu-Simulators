@@ -20,3 +20,25 @@ export async function api<T>(method: string, path: string, body?: unknown): Prom
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;
 }
+
+//nosūta failu serverim
+export async function uploadFile(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/api/uploads', {
+    method: 'POST',
+    headers: {
+      'x-user-id': String(getUser()?.id ?? ''),
+    },
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error ?? 'Augšupielāde neizdevās');
+  }
+
+  return data;
+}

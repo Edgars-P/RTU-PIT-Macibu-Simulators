@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Lesson, Upload } from '../../../shared/types';
-import { api, getUser } from '../api';
+import { api, getUser, uploadFile } from '../api';
 
 /** 3. ekrāns — Jauns tests: materiāla augšupielāde vai tēmas ievade. */
 export function NewTest() {
@@ -9,6 +9,7 @@ export function NewTest() {
   const [topic, setTopic] = useState('');
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [error, setError] = useState('');
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     api<Upload[]>('GET', '/uploads').then(setUploads).catch((e) => setError(e.message));
@@ -16,7 +17,17 @@ export function NewTest() {
 
   async function generate() {
     try {
-      // TODO: vispirms augšupielādēt izvēlēto failu (POST /uploads, multipart)
+       setError('');
+
+      // If a file was selected, upload it first
+      if (file) {
+        await uploadFile(file);
+
+        // Refresh the uploaded files list
+        const updatedUploads = await api<Upload[]>('GET', '/uploads');
+        setUploads(updatedUploads);
+      }
+
       const lesson = await api<Lesson>('POST', '/lessons', { topic });
       navigate(`/test/${lesson.id}`);
     } catch (e) {
@@ -28,7 +39,16 @@ export function NewTest() {
     <div className="cols">
       <div className="card">
         <h3>Jauns tests</h3>
-        <label>Augšupielādēt mācību materiālus (maks. 15 MB)<input type="file" /></label>
+
+        <label>
+          Augšupielādēt mācību materiālus (maks. 15 MB)
+          <input
+            type="file"
+            accept=".txt"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+
         <p className="muted">vai</p>
         <label>Apgūstamā tēma<input value={topic} onChange={(e) => setTopic(e.target.value)} /></label>
         <p className="error">{error}</p>

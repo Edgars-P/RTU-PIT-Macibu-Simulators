@@ -17,7 +17,7 @@ export class AiModule {
   /** Brīvā teksta atbilžu vērtēšana. Izvēles jautājumiem pietiek ar salīdzināšanu. */
   async checkAnswer(question: Question): Promise<boolean> {
     return question.answer === question.correct;
-  }
+}
 }
 
 export const ai = new AiModule();

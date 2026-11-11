@@ -4,5 +4,11 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "typecheck": "pnpm -r typecheck"
+  },
+  "dependencies": {
+    "multer": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/multer": "^2.3.0"
   }
 }
