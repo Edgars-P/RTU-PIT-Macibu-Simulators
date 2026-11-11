@@ -26,7 +26,37 @@ admin.put('/users/:id/password', (req, res) => {
 });
 
 // 3.6 / 3.7 Sistēmas un MI iestatījumi
+const defaults = { maxFileMb: 15, freeUploadsPerWeek: 20, paidUploadsPerWeek: 60, adsEnabled: true, aiModel: 'mock' };
+
+db.exec('CREATE TABLE IF NOT EXISTS settings ( id INTEGER PRIMARY KEY, data TEXT NOT NULL)');
+
+admin.get('/settings', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM settings WHERE id = 1').get() as { data: string } | undefined;
+    res.json(row ? JSON.parse(row.data) : defaults);
+  } catch (e) {
+    res.status(500).json({ error: 'Neizdevās ielādēt iestatījumus' });
+  }
+});
+
 admin.put('/settings', (req, res) => {
-  // TODO: saglabāt Settings (piem. tabulā settings ar vienu JSON rindu)
-  res.status(501).json({ error: 'TODO: iestatījumi' });
+  const s = req.body;
+
+  if (!s ||
+      !Number.isInteger(s.maxFileMb) || s.maxFileMb < 1 ||
+      !Number.isInteger(s.freeUploadsPerWeek) || s.freeUploadsPerWeek < 0 ||
+      !Number.isInteger(s.paidUploadsPerWeek) || s.paidUploadsPerWeek < 0 ||
+      typeof s.adsEnabled !== 'boolean' ||
+      !['mock', 'openai', 'gemini'].includes(s.aiModel)) {
+    res.status(400).json({ error: 'Nepiemēroti iestatījumi' });
+    return;
+  }
+
+  try {
+    db.prepare('INSERT INTO settings (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
+      .run(JSON.stringify(s));
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Neizdevās saglabāt iestatījumus' });
+  }
 });

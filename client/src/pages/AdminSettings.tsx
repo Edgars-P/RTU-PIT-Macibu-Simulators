@@ -1,16 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Settings } from '../../../shared/types';
 import { api } from '../api';
 
-// TODO: ielādēt no servera
 const defaults: Settings = { maxFileMb: 15, freeUploadsPerWeek: 20, paidUploadsPerWeek: 60, adsEnabled: true, aiModel: 'mock' };
 
 /** 9. ekrāns — Sistēmas iestatījumi (reklāmas, MI, ierobežojumi). */
 export function AdminSettings() {
   const [s, setS] = useState(defaults);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    api<Settings>('GET', '/admin/settings')
+      .then(setS)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false)); },
+            []);
   const num = (key: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [key]: Number(e.target.value) });
 
+  function save() {
+    setError('');
+    api('PUT', '/admin/settings', s).catch((e) => setError(e.message));
+  }
+  
+  if (loading) return <div className="card">Iestatījumi tiek ielādēti...</div>;
+  
   return (
     <div className="card">
       <h3>Sistēmas iestatījumi</h3>
@@ -26,7 +39,7 @@ export function AdminSettings() {
       <label>Augšupielādes nedēļā — bezmaksas<input type="number" value={s.freeUploadsPerWeek} onChange={num('freeUploadsPerWeek')} /></label>
       <label>Augšupielādes nedēļā — maksas<input type="number" value={s.paidUploadsPerWeek} onChange={num('paidUploadsPerWeek')} /></label>
       <p className="error">{error}</p>
-      <button onClick={() => api('PUT', '/admin/settings', s).catch((e) => setError(e.message))}>Saglabāt</button>
+      <button onClick={save}>Saglabāt</button>
     </div>
   );
 }
