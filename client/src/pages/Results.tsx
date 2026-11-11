@@ -1,12 +1,15 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import type { Result } from '../../../shared/types';
-
-// TODO: ielādēt no GET /api/lessons (vēsture) un pēdējā pārbaudījuma rezultātu
-const result: Result = { lessonId: 1, correct: 7, total: 10, weakTopics: ['Normalizācija', 'Ārējās atslēgas'] };
-const history = [40, 55, 50, 70, 80];
+import { api } from '../api';
 
 /** 5. ekrāns — Rezultāti, vājās tēmas, mācību progress. */
 export function Results() {
+  const [results, setResults] = useState<Result[]>([]);
+  useEffect(() => { api<Result[]>('GET', '/lessons').then(setResults).catch(() => {}); }, []);
+  const result: Result = useLocation().state ?? results[results.length - 1] ?? { lessonId: 0, correct: 0, total: 0, weakTopics: [] };
+  const history = results.map((r) => Math.round((r.correct / (r.total || 1)) * 100));
+
   return (
     <div className="cols">
       <div className="card">
