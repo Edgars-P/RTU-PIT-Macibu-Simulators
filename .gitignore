@@ -4,3 +4,4 @@ dist
 .vite
 data.db
 server.log
+.env

@@ -1,3 +1,6 @@
+// server/.env (GEMINI_API_KEY=...), ja tāds ir
+try { process.loadEnvFile(); } catch {}
+
 import express from 'express';
 import { admin } from './routes/admin';
 import { auth } from './routes/auth';
