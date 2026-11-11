@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Settings } from '../../../shared/types';
 import { db } from '../db';
 
 export const admin = Router();
@@ -26,37 +27,27 @@ admin.put('/users/:id/password', (req, res) => {
 });
 
 // 3.6 / 3.7 Sistēmas un MI iestatījumi
-const defaults = { maxFileMb: 15, freeUploadsPerWeek: 20, paidUploadsPerWeek: 60, adsEnabled: true, aiModel: 'mock' };
-
-db.exec('CREATE TABLE IF NOT EXISTS settings ( id INTEGER PRIMARY KEY, data TEXT NOT NULL)');
+const defaultSettings: Settings = { maxFileMb: 15, freeUploadsPerWeek: 20, paidUploadsPerWeek: 60, adsEnabled: true, aiModel: 'mock' };
+const aiModels = ['mock', 'openai', 'gemini'];
 
 admin.get('/settings', (req, res) => {
-  try {
-    const row = db.prepare('SELECT data FROM settings WHERE id = 1').get() as { data: string } | undefined;
-    res.json(row ? JSON.parse(row.data) : defaults);
-  } catch (e) {
-    res.status(500).json({ error: 'Neizdevās ielādēt iestatījumus' });
-  }
+  const row = db.prepare('SELECT data FROM settings WHERE id = 1').get() as { data: string } | undefined;
+  res.json(row ? JSON.parse(row.data) : defaultSettings);
 });
 
 admin.put('/settings', (req, res) => {
-  const s = req.body;
+  const { maxFileMb, freeUploadsPerWeek, paidUploadsPerWeek, adsEnabled, aiModel } = req.body ?? {};
+  const valid =
+    Number.isInteger(maxFileMb) && maxFileMb >= 1 &&
+    Number.isInteger(freeUploadsPerWeek) && freeUploadsPerWeek >= 0 &&
+    Number.isInteger(paidUploadsPerWeek) && paidUploadsPerWeek >= 0 &&
+    typeof adsEnabled === 'boolean' &&
+    aiModels.includes(aiModel);
+  if (!valid) return res.status(400).json({ error: 'Nepiemēroti iestatījumi' });
 
-  if (!s ||
-      !Number.isInteger(s.maxFileMb) || s.maxFileMb < 1 ||
-      !Number.isInteger(s.freeUploadsPerWeek) || s.freeUploadsPerWeek < 0 ||
-      !Number.isInteger(s.paidUploadsPerWeek) || s.paidUploadsPerWeek < 0 ||
-      typeof s.adsEnabled !== 'boolean' ||
-      !['mock', 'openai', 'gemini'].includes(s.aiModel)) {
-    res.status(400).json({ error: 'Nepiemēroti iestatījumi' });
-    return;
-  }
-
-  try {
-    db.prepare('INSERT INTO settings (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
-      .run(JSON.stringify(s));
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: 'Neizdevās saglabāt iestatījumus' });
-  }
+  // Saglabā tikai zināmos laukus, nevis visu pieprasījuma ķermeni
+  const settings: Settings = { maxFileMb, freeUploadsPerWeek, paidUploadsPerWeek, adsEnabled, aiModel };
+  db.prepare('INSERT INTO settings (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data')
+    .run(JSON.stringify(settings));
+  res.json(settings);
 });

@@ -54,6 +54,12 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Sistēmas iestatījumi: viena rinda (id = 1) ar Settings JSON
+  CREATE TABLE IF NOT EXISTS settings (
+    id   INTEGER PRIMARY KEY,
+    data TEXT NOT NULL
+  );
+
   -- TODO pēc vajadzības: subjects, chats, messages (Projektējums 2.2)
 
   INSERT OR IGNORE INTO users (username, email, password, role, plan)

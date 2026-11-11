@@ -2,28 +2,24 @@ import { useEffect, useState } from 'react';
 import type { Settings } from '../../../shared/types';
 import { api } from '../api';
 
-const defaults: Settings = { maxFileMb: 15, freeUploadsPerWeek: 20, paidUploadsPerWeek: 60, adsEnabled: true, aiModel: 'mock' };
-
 /** 9. ekrāns — Sistēmas iestatījumi (reklāmas, MI, ierobežojumi). */
 export function AdminSettings() {
-  const [s, setS] = useState(defaults);
+  const [s, setS] = useState<Settings | null>(null);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    api<Settings>('GET', '/admin/settings')
-      .then(setS)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false)); },
-            []);
+    api<Settings>('GET', '/admin/settings').then(setS).catch((e) => setError(e.message));
+  }, []);
+
+  if (!s) return <div className="card">{error ? <p className="error">{error}</p> : 'Iestatījumi tiek ielādēti...'}</div>;
+
   const num = (key: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [key]: Number(e.target.value) });
 
   function save() {
     setError('');
     api('PUT', '/admin/settings', s).catch((e) => setError(e.message));
   }
-  
-  if (loading) return <div className="card">Iestatījumi tiek ielādēti...</div>;
-  
+
   return (
     <div className="card">
       <h3>Sistēmas iestatījumi</h3>
